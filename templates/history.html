@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR History</title>
+    <style>
+        body { font-family: Arial; padding: 30px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #f2f2f2; }
+        img { width: 80px; }
+        a { text-decoration: none; color: red; }
+    </style>
+</head>
+<body>
+
+<h2>Generated QR Codes</h2>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>URL</th>
+        <th>QR Code</th>
+        <th>Created At</th>
+        <th>Action</th>
+    </tr>
+
+    {% for row in data %}
+    <tr>
+        <td>{{ row[0] }}</td>
+        <td>{{ row[1] }}</td>
+        <td>
+            <img src="/static/qrcodes/{{ row[2] }}">
+        </td>
+        <td>{{ row[3] }}</td>
+        <td>
+            <a href="/delete/{{ row[0] }}">Delete</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<br>
+<a href="/">Back</a>
+
+</body>
+</html>
