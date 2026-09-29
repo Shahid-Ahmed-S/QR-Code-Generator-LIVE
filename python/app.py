@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash
 import qrcode
 import os
 import uuid
@@ -6,18 +6,19 @@ import sqlite3
 from datetime import datetime
 from urllib.parse import urlparse
 
-
 app = Flask(__name__)
+app.secret_key = "local-secret-key"
 
+# Paths
 QR_FOLDER = "static/qrcodes"
-os.makedirs(QR_FOLDER, exist_ok=True)
-
 DB_NAME = "database.db"
 
+# Ensure QR folder exists
+os.makedirs(QR_FOLDER, exist_ok=True)
 
+# ---------- DATABASE ----------
 def get_db():
     return sqlite3.connect(DB_NAME)
-
 
 def init_db():
     conn = get_db()
@@ -33,25 +34,22 @@ def init_db():
     conn.commit()
     conn.close()
 
-
-# ✅ URL validation function (ADDED)
+# ---------- URL VALIDATION ----------
 def is_valid_url(url):
     parsed = urlparse(url)
-    return parsed.scheme in ("http", "https") and bool(parsed.netloc)
+    return parsed.scheme in ("http", "https") and parsed.netloc != ""
 
-
+# ---------- ROUTES ----------
 @app.route("/", methods=["GET", "POST"])
 def index():
     qr_image = None
-    error = None
 
     if request.method == "POST":
         url = request.form.get("url", "").strip()
 
-        # ❌ Reject invalid URLs
         if not is_valid_url(url):
-            error = "Please enter a valid URL starting with http:// or https://"
-            return render_template("index.html", error=error)
+            flash("Please enter a valid URL starting with http:// or https://")
+            return redirect(url_for("index"))
 
         filename = f"{uuid.uuid4()}.png"
         filepath = os.path.join(QR_FOLDER, filename)
@@ -72,7 +70,6 @@ def index():
 
     return render_template("index.html", qr_image=qr_image)
 
-
 @app.route("/history")
 def history():
     conn = get_db()
@@ -81,7 +78,6 @@ def history():
     data = cur.fetchall()
     conn.close()
     return render_template("history.html", data=data)
-
 
 @app.route("/delete/<int:id>")
 def delete(id):
@@ -102,7 +98,7 @@ def delete(id):
 
     return redirect(url_for("history"))
 
-
+# ---------- MAIN ----------
 if __name__ == "__main__":
     init_db()
-    app.run()
+    app.run(debug=True)
